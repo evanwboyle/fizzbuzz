@@ -15,7 +15,7 @@ const NOTIFY_NUMBER = "REDACTED_PHONE";
 
 async function notifyFizzPost(post) {
   try {
-    await fetch(OPENCLAW_URL, {
+    const res = await fetch(OPENCLAW_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -25,12 +25,13 @@ async function notifyFizzPost(post) {
         agentId: "fizzbot",
         channel: "whatsapp",
         to: NOTIFY_NUMBER,
-        message: `Send a WhatsApp message to ${NOTIFY_NUMBER} telling them about the following post if it mentions fizzbuzz:\n\n${post.text}`,
+        message: `Review the following post and determine if it is related to fizzbuzz. If and ONLY if it is related, send a WhatsApp message to ${NOTIFY_NUMBER} summarizing it. If it is not related, do nothing.\n\n${post.text}`,
       }),
     });
-    console.log(`📲 OpenClaw notified for post ${post.id}`);
+    const result = await res.json();
+    console.log(`   AI: ${res.ok ? "sent to agent" : "error"} — ${JSON.stringify(result)}`);
   } catch (err) {
-    console.error("❌ OpenClaw notification failed:", err.message);
+    console.log(`   AI: failed — ${err.message}`);
   }
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,11 +127,12 @@ async function pusherAuth(channelName, socketId) {
 // Save posts to disk
 function savePost(post) {
   const alreadyExists = savedPosts.some((p) => p.id === post.id);
-  if (alreadyExists) return;
+  if (alreadyExists) return false;
 
   savedPosts.push({ ...post, _savedAt: new Date().toISOString() });
   fs.writeFileSync(CONFIG.OUTPUT_FILE, JSON.stringify(savedPosts, null, 2));
   console.log(`💾 Saved post ${post.id} (total: ${savedPosts.length})`);
+  return true;
 }
 
 function sanitizePost(contentType, d) {
@@ -189,19 +191,16 @@ async function main() {
     console.error("❌ Subscription error:", err);
   });
 
-  // Bind to ALL events and log them so we can discover event names
   channel.bind_global((eventName, data) => {
-    if (eventName.startsWith("pusher:")) return; // skip internal pusher events
-
-    console.log(`\n📡 Event: "${eventName}"`);
+    if (eventName.startsWith("pusher:")) return;
 
     if (data?.data?.postID) {
-      console.log("   Full data:", JSON.stringify(data, null, 2));
       const post = sanitizePost(data.contentType, data.data);
-      savePost(post);
-      notifyFizzPost(post);
-    } else {
-      console.log("   Full data:", JSON.stringify(data, null, 2));
+      const isNew = savePost(post);
+      if (isNew) {
+        console.log(`\n📝 "${post.text || "(no text)"}"`);
+        notifyFizzPost(post);
+      }
     }
   });
 
