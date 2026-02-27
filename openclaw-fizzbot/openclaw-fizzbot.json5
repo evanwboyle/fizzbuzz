@@ -1,0 +1,29 @@
+// OpenClaw agent definition for Fizz post notifications.
+// Stored in the project repo for portability.
+// Referenced from ~/.openclaw/openclaw.json via $include.
+{
+  id: "fizzbot",
+
+  model: {
+    primary: "minimax-portal/MiniMax-M2.5",
+    fallbacks: ["minimax-portal/MiniMax-M2.1"],
+  },
+
+  workspace: "/Users/evanboyle/Documents/Fizz/FizzBuzz/fizzbuzz/.fizzbot-workspace",
+
+  // Restrict to messaging only — no filesystem, web, runtime, or UI tools.
+  tools: {
+    profile: "messaging",
+    deny: ["group:fs", "group:web", "group:runtime", "group:ui", "group:browser"],
+  },
+
+  // No filesystem access inside the sandbox.
+  sandbox: {
+    workspaceAccess: "none",
+  },
+
+  // Heartbeat disabled — events are driven by the Fizz scraper webhook instead.
+  heartbeat: {
+    every: "0m",
+  },
+}
