@@ -1,12 +1,12 @@
 # CSV and HTML files in Article Composition
-Article Composition/**/*.csv
-Article Composition/**/*.html
+article-composition/**/*.csv
+article-composition/**/*.html
 
 # Environment variables
 .env
 
 # Posts file in Live Scraping
-Live Scraping/posts.json
+live-scraping/posts.json
 
 # Results file in Web Crawling
-Web Crawling/crawl-results.json
+web-crawling/crawl-results.json
