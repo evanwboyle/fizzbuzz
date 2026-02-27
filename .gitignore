@@ -10,3 +10,5 @@ live-scraping/posts.json
 
 # Results file in Web Crawling
 web-crawling/crawl-results.json
+
+live-scraping/node_modules/

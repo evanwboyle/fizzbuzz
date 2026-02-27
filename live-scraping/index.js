@@ -8,6 +8,33 @@ const ENV_PATH = fileURLToPath(new URL("../.env", import.meta.url));
 
 dotenv.config({ path: ENV_PATH });
 
+// ─── OPENCLAW ─────────────────────────────────────────────────────────────────
+const OPENCLAW_URL = "http://127.0.0.1:18789/hooks/agent";
+const OPENCLAW_TOKEN = "REDACTED_TOKEN";
+const NOTIFY_NUMBER = "REDACTED_PHONE";
+
+async function notifyFizzPost(post) {
+  try {
+    await fetch(OPENCLAW_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-openclaw-token": OPENCLAW_TOKEN,
+      },
+      body: JSON.stringify({
+        agentId: "fizzbot",
+        channel: "whatsapp",
+        to: NOTIFY_NUMBER,
+        message: `Send a WhatsApp message to ${NOTIFY_NUMBER} telling them about the following post if it mentions fizzbuzz:\n\n${post.text}`,
+      }),
+    });
+    console.log(`📲 OpenClaw notified for post ${post.id}`);
+  } catch (err) {
+    console.error("❌ OpenClaw notification failed:", err.message);
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const CONFIG = {
   REFRESH_TOKEN: process.env.REFRESH_TOKEN,
@@ -172,6 +199,7 @@ async function main() {
       console.log("   Full data:", JSON.stringify(data, null, 2));
       const post = sanitizePost(data.contentType, data.data);
       savePost(post);
+      notifyFizzPost(post);
     } else {
       console.log("   Full data:", JSON.stringify(data, null, 2));
     }
