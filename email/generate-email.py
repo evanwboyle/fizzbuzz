@@ -55,21 +55,21 @@ df = pd.read_csv(csv_path)
 csv_text = df.to_string(index=False)
 
 # ---- Load slang glossary ----
-slang_path = SCRIPT_DIR / "slang-glossary.txt"
+slang_path = SCRIPT_DIR / "input" / "slang-glossary.txt"
 if slang_path.is_file():
     slang_glossary = slang_path.read_text(encoding="utf-8").strip()
 else:
     slang_glossary = "(No slang glossary yet.)"
 
 # ---- Load edition memory log ----
-memory_path = SCRIPT_DIR / "edition-memory.log"
+memory_path = SCRIPT_DIR / "input" / "edition-memory.log"
 if memory_path.is_file():
     memory_log = memory_path.read_text(encoding="utf-8").strip()
 else:
     memory_log = "(No previous editions yet.)"
 
 # ---- Load prompt template from prompt.md ----
-prompt_path = SCRIPT_DIR / "prompt.md"
+prompt_path = SCRIPT_DIR / "input" / "prompt.md"
 if not prompt_path.is_file():
     raise FileNotFoundError(f"Prompt template not found: {prompt_path}")
 prompt_template = prompt_path.read_text(encoding="utf-8")
@@ -78,7 +78,7 @@ prompt = prompt.replace("[EDITION_MEMORY_LOG]", memory_log)
 prompt = prompt.replace("[SLANG_GLOSSARY]", slang_glossary)
 
 # ---- Load HTML template ----
-template_path = SCRIPT_DIR / "template.html"
+template_path = SCRIPT_DIR / "input" / "template.html"
 if not template_path.is_file():
     raise FileNotFoundError(f"HTML template not found: {template_path}")
 html_template = template_path.read_text(encoding="utf-8")
