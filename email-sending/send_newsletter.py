@@ -121,6 +121,23 @@ def prepare_for_email(html: str) -> str:
         cssutils_logging_level=50,  # suppress cssutils warnings
     )
 
+    # 4 — Prevent Gmail from collapsing repeated structural elements.
+    #     Gmail's clipping heuristic triggers on identical adjacent blocks.
+    #     Inserting a unique zero-width non-joiner (&#8204;) + hidden span
+    #     before each section makes every block look distinct to the parser.
+    counter = [0]
+
+    def _unique_marker(match: re.Match) -> str:
+        counter[0] += 1
+        # Invisible span with unique id — Gmail sees different content each time
+        marker = f'<span style="display:none !important;font-size:0;line-height:0;height:0;overflow:hidden;">&#8204;{counter[0]}</span>'
+        return marker + match.group(0)
+
+    html = re.sub(r'<div[^>]*class="[^"]*section[^"]*"', _unique_marker, html)
+    html = re.sub(r'<div[^>]*class="[^"]*zigzag[^"]*"', _unique_marker, html)
+    html = re.sub(r'<div[^>]*class="[^"]*camp-block[^"]*"', _unique_marker, html)
+    html = re.sub(r'<div[^>]*class="[^"]*pull-quote[^"]*"', _unique_marker, html)
+
     return html
 
 
