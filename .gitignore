@@ -12,3 +12,7 @@ live-scraping/posts.json
 web-crawling/crawl-results.json
 
 live-scraping/node_modules/
+
+.mailing_list
+
+node_modules
