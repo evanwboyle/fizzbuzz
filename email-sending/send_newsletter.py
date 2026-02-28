@@ -8,18 +8,20 @@ Usage:
     python3 send_newsletter.py --file article-composition/fizz_email_20240227_120000.html
 
 Setup:
-    pip install sendgrid python-dotenv
+    pip install sendgrid python-dotenv premailer
     Add SENDGRID_API_KEY, SENDER_EMAIL, and SENDER_NAME to your .env file
     Create a .mailing_list file in the fizzbuzz root with one email per line
 """
 
 import os
+import re
 import glob
 import argparse
 from pathlib import Path
 from dotenv import load_dotenv
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, To
+from premailer import transform
 
 # ── Load .env from fizzbuzz root ─────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -68,6 +70,60 @@ def load_html(path: Path) -> str:
         return f.read()
 
 
+# ── CSS variable map (must match :root in prompt.md) ─────────────────────────
+CSS_VARS = {
+    "var(--lime)":          "#c8f135",
+    "var(--hot-pink)":      "#ff3d9a",
+    "var(--electric-blue)": "#1a6bff",
+    "var(--orange)":        "#ff6b1a",
+    "var(--yellow)":        "#ffe916",
+    "var(--bg)":            "#f0edff",
+    "var(--dark)":          "#0e0e14",
+    "var(--white)":         "#fefefe",
+}
+
+FONT_LINK = (
+    '<link href="https://fonts.googleapis.com/css2?'
+    'family=Archivo+Black&family=Chivo+Mono:ital,wght@0,300;0,400;0,700;1,400'
+    '&family=Unbounded:wght@400;700;900&family=Open+Sans:wght@400;700&display=swap" '
+    'rel="stylesheet">'
+)
+
+
+def prepare_for_email(html: str) -> str:
+    """Make the newsletter HTML email-client-friendly.
+
+    1. Replace CSS custom properties with literal hex values
+    2. Swap @import for a <link> tag (better email client support)
+    3. Inline all CSS rules onto elements via premailer
+    """
+    # 0 — Strip markdown code fences if the LLM left them in
+    html = re.sub(r"^```html?\s*\n", "", html)
+    html = re.sub(r"\n```\s*$", "", html)
+
+    # 1 — Replace CSS variables with literal values
+    for var, value in CSS_VARS.items():
+        html = html.replace(var, value)
+
+    # 2 — Replace @import with <link> tag in <head>
+    html = re.sub(
+        r"@import\s+url\(['\"]https://fonts\.googleapis\.com[^)]+\)['\"]?\s*;?",
+        "",
+        html,
+    )
+    html = html.replace("</head>", f"  {FONT_LINK}\n</head>", 1)
+
+    # 3 — Inline CSS (moves <style> rules to inline style attributes)
+    html = transform(
+        html,
+        keep_style_tags=True,      # keep <style> as fallback for clients that support it
+        strip_important=False,
+        cssutils_logging_level=50,  # suppress cssutils warnings
+    )
+
+    return html
+
+
 def send_newsletter(html_content: str, recipients: list[str], subject: str):
     if not SENDGRID_API_KEY:
         raise ValueError("SENDGRID_API_KEY not set in .env")
@@ -114,6 +170,9 @@ def main():
     print()
 
     html = load_html(newsletter_path)
+
+    print("🔧 Inlining CSS for email compatibility...")
+    html = prepare_for_email(html)
 
     print("🚀 Sending...")
     status = send_newsletter(html, recipients, EMAIL_SUBJECT)

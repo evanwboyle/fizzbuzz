@@ -204,9 +204,8 @@ Produce a single complete `.html` file. Do not include any explanation or markdo
     <strong>Except [specific callout or generic funny line].</strong>
   </p>
   <div class="footer-links">
-    <span class="footer-link fl-pink">Unsubscribe</span>
-    <span class="footer-link fl-lime">Forward to a chud</span>
-    <span class="footer-link fl-blue">Send us feedback</span>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSccbKFmIyWuBD0FIiQYyBtaFVFr4ma5Z1UsyMJdZ9EI7Hjk_g/viewform?usp=publish-editor" class="footer-link fl-pink" style="text-decoration:none;color:inherit;">Unsubscribe</a>
+    <a href="https://forms.gle/a6ppo2q2WSJ7BQn67" class="footer-link fl-lime" style="text-decoration:none;color:inherit;">Send to a friend</a>
   </div>
 </div>
 ```
