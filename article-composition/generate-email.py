@@ -54,12 +54,28 @@ if not os.path.isfile(csv_path):
 df = pd.read_csv(csv_path)
 csv_text = df.to_string(index=False)
 
+# ---- Load slang glossary ----
+slang_path = SCRIPT_DIR / "slang-glossary.txt"
+if slang_path.is_file():
+    slang_glossary = slang_path.read_text(encoding="utf-8").strip()
+else:
+    slang_glossary = "(No slang glossary yet.)"
+
+# ---- Load edition memory log ----
+memory_path = SCRIPT_DIR / "edition-memory.log"
+if memory_path.is_file():
+    memory_log = memory_path.read_text(encoding="utf-8").strip()
+else:
+    memory_log = "(No previous editions yet.)"
+
 # ---- Load prompt template from prompt.md ----
 prompt_path = SCRIPT_DIR / "prompt.md"
 if not prompt_path.is_file():
     raise FileNotFoundError(f"Prompt template not found: {prompt_path}")
 prompt_template = prompt_path.read_text(encoding="utf-8")
 prompt = prompt_template.replace("[PASTE CSV HERE]", csv_text)
+prompt = prompt.replace("[EDITION_MEMORY_LOG]", memory_log)
+prompt = prompt.replace("[SLANG_GLOSSARY]", slang_glossary)
 
 # ---- Load HTML template ----
 template_path = SCRIPT_DIR / "template.html"
@@ -132,14 +148,50 @@ issue_info = extract_block(raw_output, "ISSUE_INFO")
 ticker = extract_block(raw_output, "TICKER")
 sections = extract_block(raw_output, "SECTIONS")
 footer_except = extract_block(raw_output, "FOOTER_EXCEPT")
+edition_memory = extract_block(raw_output, "EDITION_MEMORY")
 
-if all([issue_info, ticker, sections, footer_except]):
+# ---- Save edition memory (regardless of HTML assembly success) ----
+if edition_memory:
+    memory_line = edition_memory.strip()
+    with open(memory_path, "a", encoding="utf-8") as mf:
+        mf.write(memory_line + "\n")
+    print(f"\n[Edition memory saved to {memory_path.name}]")
+else:
+    print("\nWARNING: No EDITION_MEMORY block found in AI output. Memory not updated.")
+
+# ---- Extract and report unknown slang ----
+unknown_slang = extract_block(raw_output, "UNKNOWN_SLANG")
+if unknown_slang and unknown_slang.strip():
+    # Read existing glossary terms to avoid duplicates
+    existing_terms = set()
+    if slang_path.is_file():
+        for line in slang_path.read_text(encoding="utf-8").splitlines():
+            term = line.split("=")[0].strip().lower()
+            if term:
+                existing_terms.add(term)
+
+    new_terms = [t.strip() for t in unknown_slang.split(",") if t.strip()]
+    new_terms = [t for t in new_terms if t.lower() not in existing_terms]
+
+    if new_terms:
+        with open(slang_path, "a", encoding="utf-8") as sf:
+            for term in new_terms:
+                sf.write(f"{term} = ???\n")
+        print(f"[New slang added to {slang_path.name}: {', '.join(new_terms)}]")
+        print(f"  -> Edit {slang_path.name} to fill in definitions for terms marked '???'")
+    else:
+        print("[No new unknown slang found.]")
+else:
+    print("[No unknown slang reported.]")
+
+html_blocks = [issue_info, ticker, sections, footer_except]
+if all(html_blocks):
     final_html = html_template
     final_html = final_html.replace("{{ISSUE_INFO}}", issue_info)
     final_html = final_html.replace("{{TICKER_CONTENT}}", ticker)
     final_html = final_html.replace("{{SECTIONS}}", sections)
     final_html = final_html.replace("{{FOOTER_EXCEPT}}", footer_except)
-    print("\n[Template assembly: OK]")
+    print("[Template assembly: OK]")
 else:
     missing = [name for name, val in [
         ("ISSUE_INFO", issue_info), ("TICKER", ticker),
