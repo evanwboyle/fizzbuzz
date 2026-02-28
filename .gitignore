@@ -1,18 +1,15 @@
-# CSV and HTML files in Article Composition
-article-composition/**/*.csv
-article-composition/**/*.html
+# Data files
+data/
+
+# Generated email output
+email/output/
 
 # Environment variables
 .env
 
-# Posts file in Live Scraping
-live-scraping/posts.json
-
-# Results file in Web Crawling
-web-crawling/crawl-results.json
-
-live-scraping/node_modules/
-
+# Mailing list
 .mailing_list
 
+# Dependencies
 node_modules
+.venv

@@ -13,13 +13,13 @@ log "=== Starting daily email pipeline ==="
 
 # Step 1: Crawl recent posts
 log "Running crawl (--recent)..."
-cd "$PROJECT_DIR/web-crawling"
+cd "$PROJECT_DIR/scraping"
 node crawl.mjs --recent 2>&1 | tee -a "$LOG_FILE"
 log "Crawl complete."
 
 # Step 2: Sanitize crawl results to CSV
 log "Running sanitize..."
-cd "$PROJECT_DIR/article-composition"
+cd "$PROJECT_DIR/email"
 python3 sanitize.py 2>&1 | tee -a "$LOG_FILE"
 log "Sanitize complete."
 

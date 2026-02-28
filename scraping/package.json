@@ -1,11 +1,11 @@
 {
-  "name": "fizz-listener",
+  "name": "fizz-scraping",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Fizz crawling and live scraping tools",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "crawl": "node crawl.mjs",
+    "live": "node live-scrape.js"
   },
   "keywords": [],
   "author": "",

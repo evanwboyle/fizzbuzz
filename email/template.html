@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIZZBUZZ — Yale's Anonymous App Daily</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Chivo+Mono:ital,wght@0,300;0,400;0,700;1,400&family=Unbounded:wght@400;700;900&family=Open+Sans:wght@400;700&display=swap');
+
+    :root {
+      --lime: #c8f135;
+      --hot-pink: #ff3d9a;
+      --electric-blue: #1a6bff;
+      --orange: #ff6b1a;
+      --yellow: #ffe916;
+      --bg: #f0edff;
+      --dark: #0e0e14;
+      --white: #fefefe;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Open Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--dark);
+    }
+
+    .container {
+      max-width: 660px;
+      margin: 0 auto;
+      background: var(--white);
+      box-shadow: 0 0 40px rgba(0,0,0,0.08);
+    }
+
+    .masthead {
+      background: var(--dark);
+      padding: 36px 32px 28px;
+      color: var(--white);
+    }
+
+    .masthead-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .masthead-tag {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      background: var(--lime);
+      color: var(--dark);
+      padding: 4px 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .masthead-issue {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      color: #888;
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    .masthead-title {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 0.95;
+      margin-bottom: 16px;
+    }
+
+    .masthead-title .pink {
+      color: var(--hot-pink);
+    }
+
+    .masthead-sub {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .masthead-stripe {
+      display: flex;
+      height: 8px;
+      margin-top: 24px;
+      margin-left: -32px;
+      margin-right: -32px;
+    }
+
+    .masthead-stripe div { flex: 1; }
+
+    .ticker {
+      background: var(--hot-pink);
+      padding: 12px 20px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .ticker-content {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--white);
+      display: inline-block;
+      animation: ticker 20s linear infinite;
+    }
+
+    .ticker span {
+      margin: 0 12px;
+      opacity: 0.7;
+    }
+
+    @keyframes ticker {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .content {
+      padding: 32px 24px;
+    }
+
+    .zigzag {
+      height: 12px;
+      margin: 32px -24px;
+      background: repeating-linear-gradient(
+        135deg,
+        var(--lime) 0px, var(--lime) 8px,
+        var(--hot-pink) 8px, var(--hot-pink) 16px,
+        var(--electric-blue) 16px, var(--electric-blue) 24px,
+        var(--orange) 24px, var(--orange) 32px,
+        var(--yellow) 32px, var(--yellow) 40px
+      );
+    }
+
+    .section-label {
+      display: inline-block;
+      font-family: 'Chivo Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .label-pink { background: var(--hot-pink); color: white; }
+    .label-blue { background: var(--electric-blue); color: white; }
+    .label-lime { background: var(--lime); color: var(--dark); }
+    .label-orange { background: var(--orange); color: white; }
+    .label-yellow { background: var(--yellow); color: var(--dark); }
+
+    .section-title {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 24px;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .section-title em {
+      font-style: italic;
+      color: var(--hot-pink);
+    }
+
+    .section-intro {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    p { margin-bottom: 12px; }
+
+    .camp-block {
+      padding: 16px;
+      margin: 16px 0;
+      border: 2px solid;
+    }
+
+    .believers {
+      background: #e6ffb0;
+      border-color: var(--lime);
+    }
+
+    .confused {
+      background: #fff0fa;
+      border-color: var(--hot-pink);
+    }
+
+    .contra {
+      background: #fff3e8;
+      border-color: var(--orange);
+    }
+
+    .camp-title {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    .pill-green { background: var(--lime); color: var(--dark); }
+    .pill-red { background: var(--hot-pink); color: white; }
+    .pill-dark { background: var(--dark); color: var(--lime); }
+
+    .pull-quote {
+      background: var(--dark);
+      color: var(--white);
+      padding: 24px;
+      margin: 20px 0;
+      position: relative;
+      border-left: 4px solid var(--hot-pink);
+    }
+
+    .pull-quote::before {
+      content: '"';
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 80px;
+      color: var(--hot-pink);
+      opacity: 0.3;
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      line-height: 1;
+    }
+
+    .pull-quote p {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pull-quote cite {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 10px;
+      color: #888;
+      font-style: normal;
+    }
+
+    .img-block {
+      margin: 20px 0;
+    }
+
+    .img-block img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .img-caption {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 8px 12px;
+      letter-spacing: 1px;
+    }
+
+    .cap-lime { background: var(--lime); color: var(--dark); }
+    .cap-blue { background: var(--electric-blue); color: white; }
+    .cap-pink { background: var(--hot-pink); color: white; }
+
+    .weather-box {
+      background: #dff4ff;
+      border: 2px solid var(--electric-blue);
+      padding: 16px;
+      margin: 16px 0;
+    }
+
+    .weather-box p {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .potd-wrap {
+      margin-top: 40px;
+    }
+
+    .potd-label {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--yellow);
+      color: var(--dark);
+      padding: 6px 12px;
+      display: inline-block;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .potd-box {
+      background: linear-gradient(135deg, var(--electric-blue), var(--hot-pink));
+      padding: 24px;
+      color: var(--white);
+    }
+
+    .potd-box p {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 19px;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .potd-box cite {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 10px;
+      opacity: 0.8;
+      font-style: normal;
+    }
+
+    .footer {
+      background: var(--dark);
+      padding: 40px 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .footer::before {
+      content: 'FIZZ';
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 120px;
+      color: white;
+      opacity: 0.03;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+    }
+
+    .footer p {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 12px;
+      color: #888;
+      line-height: 1.8;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer strong {
+      color: var(--white);
+    }
+
+    .footer-links {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .footer-link {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 8px 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .fl-pink { background: var(--hot-pink); color: white; }
+    .fl-lime { background: var(--lime); color: var(--dark); }
+
+    ul {
+      margin: 12px 0;
+      padding-left: 20px;
+    }
+
+    li { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="masthead">
+      <div class="masthead-top">
+        <div class="masthead-tag">Yale Only</div>
+        <div class="masthead-issue">{{ISSUE_INFO}}</div>
+      </div>
+      <div class="masthead-title">
+        <span>FIZZ</span><br><span class="pink">BUZZ</span>
+      </div>
+      <div class="masthead-sub">your daily digest for people with better things to do than doom-scroll a college gossip app</div>
+      <div class="masthead-stripe">
+        <div style="background:var(--lime)"></div>
+        <div style="background:var(--hot-pink)"></div>
+        <div style="background:var(--electric-blue)"></div>
+        <div style="background:var(--orange)"></div>
+        <div style="background:var(--yellow)"></div>
+      </div>
+    </div>
+
+    <div class="ticker">
+      <div class="ticker-content">
+        {{TICKER_CONTENT}}
+      </div>
+    </div>
+
+    <div class="content">
+      {{SECTIONS}}
+    </div>
+
+    <div class="footer">
+      <p>
+        <strong>The Yale Fizz Gazette</strong> is not responsible for any secondhand<br>
+        embarrassment incurred while reading this. This newsfeed was AI generated based on real posts, take it with a grain of salt. All posters are anonymous.<br>
+        <strong>{{FOOTER_EXCEPT}}</strong>
+      </p>
+      <div class="footer-links">
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSccbKFmIyWuBD0FIiQYyBtaFVFr4ma5Z1UsyMJdZ9EI7Hjk_g/viewform?usp=publish-editor" class="footer-link fl-pink" style="text-decoration:none;color:inherit;">Unsubscribe</a>
+        <a href="https://forms.gle/a6ppo2q2WSJ7BQn67" class="footer-link fl-lime" style="text-decoration:none;color:inherit;">Send to a friend</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

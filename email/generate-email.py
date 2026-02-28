@@ -45,10 +45,10 @@ client = anthropic.Anthropic(
 )
 
 # ---- Get CSV path ----
-csv_path = "crawl-results-new.csv"
+csv_path = str(Path(__file__).resolve().parents[1] / "data" / "crawl-results-new.csv")
 
 if not os.path.isfile(csv_path):
-    raise FileNotFoundError("crawl-results-new.csv not found in current directory.")
+    raise FileNotFoundError("data/crawl-results-new.csv not found. Run sanitize.py first.")
 
 # ---- Load Fizz posts ----
 df = pd.read_csv(csv_path)
@@ -85,7 +85,7 @@ html_template = template_path.read_text(encoding="utf-8")
 
 # ---- Prepare output file ----
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = f"fizz_email_{timestamp}.html"
+output_file = str(SCRIPT_DIR / "output" / f"fizz_email_{timestamp}.html")
 
 # ---- Call MiniMax via Anthropic SDK (streaming) ----
 print(f"Prompt size: {len(prompt):,} chars ({len(df)} posts loaded)")

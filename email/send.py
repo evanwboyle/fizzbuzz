@@ -4,8 +4,8 @@ send_newsletter.py
 Sends the latest FizzBuzz HTML newsletter to a list of recipients via SendGrid.
 
 Usage:
-    python3 send_newsletter.py
-    python3 send_newsletter.py --file article-composition/fizz_email_20240227_120000.html
+    python3 send.py
+    python3 send.py --file email/output/fizz_email_20240227_120000.html
     python3 send_newsletter.py --sample              # launch web GUI for sample sends
     python3 send_newsletter.py --sample --port 8080  # custom port
 
@@ -58,11 +58,11 @@ def load_mailing_list() -> list[str]:
 
 def find_latest_newsletter() -> Path:
     """Return the most recently generated fizz_email_*.html file."""
-    pattern = str(ROOT / "article-composition" / "fizz_email_*.html")
+    pattern = str(ROOT / "email" / "output" / "fizz_email_*.html")
     files = sorted(glob.glob(pattern))
     if not files:
         raise FileNotFoundError(
-            "No fizz_email_*.html files found in article-composition/. "
+            "No fizz_email_*.html files found in email/output/. "
             "Run generate-email.py first."
         )
     return Path(files[-1])
@@ -147,12 +147,12 @@ def prepare_for_email(html: str) -> str:
 def find_sample_newsletter() -> Path:
     """Return the most recent fizz_sample_*.html, falling back to fizz_email_*.html."""
     for prefix in ("fizz_sample_", "fizz_email_"):
-        pattern = str(ROOT / "article-composition" / f"{prefix}*.html")
+        pattern = str(ROOT / "email" / "output" / f"{prefix}*.html")
         files = sorted(glob.glob(pattern))
         if files:
             return Path(files[-1])
     raise FileNotFoundError(
-        "No fizz_sample_*.html or fizz_email_*.html files found in article-composition/. "
+        "No fizz_sample_*.html or fizz_email_*.html files found in email/output/. "
         "Run generate-email.py first."
     )
 

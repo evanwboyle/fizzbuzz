@@ -7,8 +7,8 @@ parser.add_argument("--days", type=int, default=7, help="Only include posts from
 args = parser.parse_args()
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-INPUT_PATH = ROOT_DIR / "web-crawling" / "crawl-results.json"
-OUTPUT_PATH = ROOT_DIR / "article-composition" / "crawl-results-new.csv"
+INPUT_PATH = ROOT_DIR / "data" / "crawl-results.json"
+OUTPUT_PATH = ROOT_DIR / "data" / "crawl-results-new.csv"
 
 with open(INPUT_PATH) as f:
     data = json.load(f)
