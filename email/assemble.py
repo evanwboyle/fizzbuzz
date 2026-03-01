@@ -1,31 +1,36 @@
 #!/usr/bin/env python3
 """
 assemble.py
-Combines a raw AI output file with the HTML template to produce a styled newsletter.
+Combines a raw AI output file with the MJML template, compiles to email-safe HTML.
 
 Usage:
     python3 assemble.py                          # uses latest fizz_raw_*.html
     python3 assemble.py --file email/output/fizz_raw_20260228_153608.html
-    python3 assemble.py --template email/input/template.html  # custom template
+    python3 assemble.py --template email/input/template.mjml  # custom template
+
+Assembly logic lives in generate-email.py; this script is a thin CLI wrapper.
 """
 
-import re
 import glob
 import argparse
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-ROOT = SCRIPT_DIR.parent
+# Import shared assembly logic from generate-email.py
+from importlib.util import spec_from_file_location, module_from_spec
 
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_ROOT = _SCRIPT_DIR.parent
 
-def extract_block(raw: str, name: str) -> str | None:
-    pattern = rf"<!--{name}-->(.*?)<!--/{name}-->"
-    match = re.search(pattern, raw, re.DOTALL)
-    return match.group(1).strip() if match else None
+_spec = spec_from_file_location("generate_email", _SCRIPT_DIR / "generate-email.py")
+_mod = module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+
+assemble_html = _mod.assemble_html
+extract_block = _mod.extract_block
 
 
 def find_latest_raw() -> Path:
-    pattern = str(SCRIPT_DIR / "output" / "fizz_raw_*.html")
+    pattern = str(_SCRIPT_DIR / "output" / "fizz_raw_*.html")
     files = sorted(glob.glob(pattern))
     if not files:
         raise FileNotFoundError(
@@ -35,39 +40,9 @@ def find_latest_raw() -> Path:
     return Path(files[-1])
 
 
-def assemble(raw_path: Path, template_path: Path) -> str:
-    raw_output = raw_path.read_text(encoding="utf-8")
-    html_template = template_path.read_text(encoding="utf-8")
-
-    issue_info = extract_block(raw_output, "ISSUE_INFO")
-    ticker = extract_block(raw_output, "TICKER")
-    sections = extract_block(raw_output, "SECTIONS")
-    footer_except = extract_block(raw_output, "FOOTER_EXCEPT")
-
-    blocks = {
-        "ISSUE_INFO": issue_info,
-        "TICKER": ticker,
-        "SECTIONS": sections,
-        "FOOTER_EXCEPT": footer_except,
-    }
-
-    missing = [name for name, val in blocks.items() if val is None]
-    if missing:
-        raise ValueError(
-            f"Could not find delimited blocks in {raw_path.name}: {', '.join(missing)}"
-        )
-
-    final = html_template
-    final = final.replace("{{ISSUE_INFO}}", issue_info)
-    final = final.replace("{{TICKER_CONTENT}}", ticker)
-    final = final.replace("{{SECTIONS}}", sections)
-    final = final.replace("{{FOOTER_EXCEPT}}", footer_except)
-    return final
-
-
 def main():
     parser = argparse.ArgumentParser(
-        description="Assemble a raw AI output file with the HTML template"
+        description="Assemble a raw AI output file with the MJML template"
     )
     parser.add_argument(
         "--file", "-f",
@@ -79,7 +54,7 @@ def main():
         "--template", "-t",
         type=str,
         default=None,
-        help="Path to the HTML template (default: email/input/template.html)",
+        help="Path to the MJML template (default: email/input/template.mjml)",
     )
     args = parser.parse_args()
 
@@ -87,7 +62,7 @@ def main():
     if args.file:
         raw_path = Path(args.file)
         if not raw_path.is_absolute():
-            raw_path = ROOT / raw_path
+            raw_path = _ROOT / raw_path
     else:
         raw_path = find_latest_raw()
 
@@ -98,9 +73,9 @@ def main():
     if args.template:
         template_path = Path(args.template)
         if not template_path.is_absolute():
-            template_path = ROOT / template_path
+            template_path = _ROOT / template_path
     else:
-        template_path = SCRIPT_DIR / "input" / "template.html"
+        template_path = _SCRIPT_DIR / "input" / "template.mjml"
 
     if not template_path.is_file():
         raise FileNotFoundError(f"Template not found: {template_path}")
@@ -108,11 +83,20 @@ def main():
     print(f"Raw input:  {raw_path.name}")
     print(f"Template:   {template_path.name}")
 
-    final_html = assemble(raw_path, template_path)
+    raw_output = raw_path.read_text(encoding="utf-8")
+    mjml_template = template_path.read_text(encoding="utf-8")
+
+    final_html = assemble_html(raw_output, mjml_template)
+    if final_html is None:
+        blocks = ["TICKER", "SECTIONS", "FOOTER_EXCEPT"]
+        missing = [b for b in blocks if extract_block(raw_output, b) is None]
+        raise ValueError(
+            f"Could not find delimited blocks in {raw_path.name}: {', '.join(missing)}"
+        )
 
     # Derive output name from raw file: fizz_raw_... -> fizz_email_...
     out_name = raw_path.name.replace("fizz_raw_", "fizz_email_")
-    output_path = SCRIPT_DIR / "output" / out_name
+    output_path = _SCRIPT_DIR / "output" / out_name
 
     output_path.write_text(final_html, encoding="utf-8")
     print(f"[Assembly OK]")

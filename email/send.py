@@ -10,7 +10,7 @@ Usage:
     python3 send_newsletter.py --sample --port 8080  # custom port
 
 Setup:
-    pip install sendgrid python-dotenv premailer flask
+    pip install sendgrid python-dotenv flask
     Add SENDGRID_API_KEY, SENDER_EMAIL, and SENDER_NAME to your .env file
     Create a .mailing_list file in the fizzbuzz root with one email per line
 """
@@ -24,7 +24,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, To
-from premailer import transform
 
 # ── Load .env from fizzbuzz root ─────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -73,80 +72,15 @@ def load_html(path: Path) -> str:
         return f.read()
 
 
-# ── CSS variable map (must match :root in prompt.md) ─────────────────────────
-CSS_VARS = {
-    "var(--lime)":          "#c8f135",
-    "var(--hot-pink)":      "#ff3d9a",
-    "var(--electric-blue)": "#1a6bff",
-    "var(--orange)":        "#ff6b1a",
-    "var(--yellow)":        "#ffe916",
-    "var(--bg)":            "#f0edff",
-    "var(--dark)":          "#0e0e14",
-    "var(--white)":         "#fefefe",
-}
-
-FONT_LINK = (
-    '<link href="https://fonts.googleapis.com/css2?'
-    'family=Archivo+Black&family=Chivo+Mono:ital,wght@0,300;0,400;0,700;1,400'
-    '&family=Unbounded:wght@400;700;900&family=Open+Sans:wght@400;700&display=swap" '
-    'rel="stylesheet">'
-)
-
-
 def prepare_for_email(html: str) -> str:
-    """Make the newsletter HTML email-client-friendly.
+    """Minimal cleanup for MJML-compiled HTML before sending.
 
-    1. Replace CSS custom properties with literal hex values
-    2. Swap @import for a <link> tag (better email client support)
-    3. Inline all CSS rules onto elements via premailer
+    MJML output is already email-safe (inlined styles, table layout, no CSS
+    variables or animations). This function only strips stray markdown fences
+    the LLM might have left in.
     """
-    # 0 — Strip markdown code fences if the LLM left them in
     html = re.sub(r"^```html?\s*\n", "", html)
     html = re.sub(r"\n```\s*$", "", html)
-
-    # 1 — Replace CSS variables with literal values
-    for var, value in CSS_VARS.items():
-        html = html.replace(var, value)
-
-    # 2 — Strip @import (will be re-added as <link> after premailer)
-    html = re.sub(
-        r"@import\s+url\(['\"]https://fonts\.googleapis\.com[^)]+\)['\"]?\s*;?",
-        "",
-        html,
-    )
-
-    # 3 — Strip @keyframes (unsupported in email clients, confuses premailer)
-    html = re.sub(r"@keyframes\s+\w+\s*\{[^}]*\{[^}]*\}[^}]*\}", "", html)
-    html = re.sub(r"animation:[^;]+;", "", html)
-
-    # 4 — Inline CSS (moves <style> rules to inline style attributes)
-    html = transform(
-        html,
-        keep_style_tags=True,      # keep <style> as fallback for clients that support it
-        strip_important=False,
-        cssutils_logging_level=50,  # suppress cssutils warnings
-    )
-
-    # 5 — Insert Google Fonts <link> AFTER premailer (premailer strips <link> tags)
-    html = html.replace("</head>", f"  {FONT_LINK}\n</head>", 1)
-
-    # 6 — Prevent Gmail from collapsing repeated structural elements.
-    #     Gmail's clipping heuristic triggers on identical adjacent blocks.
-    #     Inserting a unique zero-width non-joiner (&#8204;) + hidden span
-    #     before each section makes every block look distinct to the parser.
-    counter = [0]
-
-    def _unique_marker(match: re.Match) -> str:
-        counter[0] += 1
-        # Invisible span with unique id — Gmail sees different content each time
-        marker = f'<span style="display:none !important;font-size:0;line-height:0;height:0;overflow:hidden;">&#8204;{counter[0]}</span>'
-        return marker + match.group(0)
-
-    html = re.sub(r'<div[^>]*class="[^"]*section[^"]*"', _unique_marker, html)
-    html = re.sub(r'<div[^>]*class="[^"]*zigzag[^"]*"', _unique_marker, html)
-    html = re.sub(r'<div[^>]*class="[^"]*camp-block[^"]*"', _unique_marker, html)
-    html = re.sub(r'<div[^>]*class="[^"]*pull-quote[^"]*"', _unique_marker, html)
-
     return html
 
 

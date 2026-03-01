@@ -390,6 +390,44 @@
     .fl-pink { background: var(--hot-pink); color: white; }
     .fl-lime { background: var(--lime); color: var(--dark); }
 
+    .editors-note {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 12px;
+      font-style: italic;
+      color: #aaa;
+      padding: 10px 32px;
+      line-height: 1.6;
+    }
+
+    .editors-note-label {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      font-style: normal;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--hot-pink);
+    }
+
+    .editors-note-header {
+      background: var(--dark);
+      border-top: 2px solid var(--hot-pink);
+    }
+
+    .editors-note-footer {
+      background: var(--dark);
+      border-bottom: 2px solid var(--lime);
+      padding-bottom: 0;
+    }
+
+    .version-tag {
+      font-family: 'Chivo Mono', monospace;
+      font-size: 9px;
+      color: #444;
+      margin-top: 24px;
+      letter-spacing: 1px;
+    }
+
     ul {
       margin: 12px 0;
       padding-left: 20px;
@@ -459,6 +497,8 @@
       </div>
     </div>
 
+    {{EDITORS_NOTE_HEADER}}
+
     <div class="ticker">
       <div class="ticker-content">
         {{TICKER_CONTENT}}
@@ -475,6 +515,7 @@
         embarrassment incurred while reading this. This newsfeed was AI generated based on real posts, take it with a grain of salt. All posters are anonymous.<br>
         <strong>{{FOOTER_EXCEPT}}</strong>
       </p>
+      {{EDITORS_NOTE_FOOTER}}
       <table cellpadding="0" cellspacing="0" border="0" align="center" style="border-collapse:collapse;margin-top:24px;">
         <tr>
           <td style="padding-right:8px;">

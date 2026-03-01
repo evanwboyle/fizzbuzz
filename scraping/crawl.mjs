@@ -1,7 +1,9 @@
 import fetch from "node-fetch";
 import fs from "fs";
+import path from "path";
 import { fileURLToPath } from "url";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ENV_PATH = fileURLToPath(new URL("../.env", import.meta.url));
 
 function loadEnvFile(path) {
@@ -27,11 +29,12 @@ const CONFIG = {
   FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
   FIZZ_API_BASE: process.env.FIZZ_API_BASE,
   COMMUNITY: process.env.COMMUNITY,
-  OUTPUT_FILE: process.env.CRAWL_OUTPUT_FILE,
+  OUTPUT_FILE: path.resolve(__dirname, process.env.CRAWL_OUTPUT_FILE),
   MAX_POSTS: Number(process.env.CRAWL_MAX_POSTS),
   MAX_DEPTH: Number(process.env.CRAWL_MAX_DEPTH),
   CONCURRENCY: Number(process.env.CRAWL_CONCURRENCY),
   TOKEN_REFRESH_MS: Number(process.env.CRAWL_TOKEN_REFRESH_MS),
+  SEED_FILE: path.resolve(__dirname, process.env.SEED_FILE || "../data/posts.json"),
 };
 
 const REQUIRED_CONFIG_KEYS = [
@@ -144,7 +147,7 @@ async function main() {
   const args = process.argv.slice(2);
   const forceRestart = args.includes("--restart");
   const recentOnly = args.includes("--recent") || args.includes("--recent-hops");
-  const recentCutoff = Date.now() / 1000 - 7 * 86400; // 1 day ago in unix seconds
+  const recentCutoff = Date.now() / 1000 - 2 * 86400; // 1 day ago in unix seconds
 
   // --recent-hops N: expand recent posts freely, but also follow N hops into older posts
   const hopsIdx = args.indexOf("--recent-hops");
@@ -196,6 +199,22 @@ async function main() {
       seenIDs.add(p.postID);
       allPosts.set(p.postID, p);
     }
+  }
+
+  // ── Inject IDs from seed file (data/posts.json by default) ───────────
+  if (fs.existsSync(CONFIG.SEED_FILE)) {
+    const seedData = JSON.parse(fs.readFileSync(CONFIG.SEED_FILE, "utf8"));
+    const seedArray = Array.isArray(seedData) ? seedData : [];
+    let added = 0;
+    for (const entry of seedArray) {
+      const id = entry.id || entry.postID;
+      if (id && !seenIDs.has(id)) {
+        seenIDs.add(id);
+        allPosts.set(id, { postID: id, text: entry.text || "", date: entry.date || 0, _seedFile: true });
+        added++;
+      }
+    }
+    if (added > 0) console.log(`── Seed file: loaded ${added} new post IDs from ${CONFIG.SEED_FILE}`);
   }
 
   // ── Build frontier ─────────────────────────────────────────────────────

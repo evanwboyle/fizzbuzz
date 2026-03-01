@@ -14,12 +14,15 @@ email/output/
 node_modules
 .venv
 
-
 email/__pycache__/
 
 # logs
 edition-memory.log
 slang-glossary.txt
+logs
 
 # OS files
 **/.DS_Store
+
+
+
