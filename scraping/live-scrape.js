@@ -1,8 +1,11 @@
 import Pusher from "pusher-js";
 import fetch from "node-fetch";
 import fs from "fs";
+import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ENV_PATH = fileURLToPath(new URL("../.env", import.meta.url));
 
@@ -45,7 +48,7 @@ const CONFIG = {
   PUSHER_APP_KEY: process.env.PUSHER_APP_KEY,
   PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
   COMMUNITY: process.env.COMMUNITY,
-  OUTPUT_FILE: process.env.OUTPUT_FILE || "./posts.json",
+  OUTPUT_FILE: path.resolve(__dirname, process.env.OUTPUT_FILE || "../data/posts.json"),
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
