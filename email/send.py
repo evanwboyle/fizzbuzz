@@ -23,7 +23,7 @@ import webbrowser
 from pathlib import Path
 from dotenv import load_dotenv
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, To
+from sendgrid.helpers.mail import Mail, To, Bcc
 
 # ── Load .env from fizzbuzz root ─────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
@@ -241,10 +241,12 @@ def send_newsletter(html_content: str, recipients: list[str], subject: str):
 
     message = Mail(
         from_email=(SENDER_EMAIL, SENDER_NAME),
+        to_emails=SENDER_EMAIL,
         subject=subject,
         html_content=html_content,
     )
-    message.to = [To(email) for email in recipients]
+    for email in recipients:
+        message.add_bcc(Bcc(email))
 
     client = SendGridAPIClient(SENDGRID_API_KEY)
     response = client.send(message)

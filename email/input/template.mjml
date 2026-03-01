@@ -54,14 +54,6 @@
       </mj-column>
     </mj-section>
 
-    <!-- Masthead color stripe -->
-    <mj-section padding="0">
-      <mj-column width="20%" padding="0"><mj-text padding="0"><div style="background:#c8f135;height:8px;"></div></mj-text></mj-column>
-      <mj-column width="20%" padding="0"><mj-text padding="0"><div style="background:#ff3d9a;height:8px;"></div></mj-text></mj-column>
-      <mj-column width="20%" padding="0"><mj-text padding="0"><div style="background:#1a6bff;height:8px;"></div></mj-text></mj-column>
-      <mj-column width="20%" padding="0"><mj-text padding="0"><div style="background:#ff6b1a;height:8px;"></div></mj-text></mj-column>
-      <mj-column width="20%" padding="0"><mj-text padding="0"><div style="background:#ffe916;height:8px;"></div></mj-text></mj-column>
-    </mj-section>
 
     <!-- ══════════ EDITOR'S NOTE (HEADER) ══════════ -->
     {{EDITORS_NOTE_HEADER}}
@@ -83,7 +75,7 @@
       <mj-column>
         <mj-text padding="0" font-family="'Open Sans', Arial, sans-serif" font-size="12px" color="#888888" line-height="1.8" align="center">
           <strong style="color:#fefefe;">FIZZBUZZ</strong> is not responsible for any secondhand<br>
-          embarrassment incurred while reading this. This newsfeed was AI generated based on real posts, take it with a grain of salt. All posters are anonymous.<br>
+          embarrassment incurred while reading this. This newsfeed was AI generated based on fizz posts, so double-check important details. All posters are anonymous.<br>
           <strong style="color:#fefefe;">{{FOOTER_EXCEPT}}</strong>
         </mj-text>
       </mj-column>
@@ -94,12 +86,12 @@
 
     <!-- Footer buttons -->
     <mj-section background-color="#0e0e14" padding="0 24px 40px 24px">
-      <mj-column width="50%">
+      <mj-column width="40%">
         <mj-button href="https://docs.google.com/forms/d/e/1FAIpQLSccbKFmIyWuBD0FIiQYyBtaFVFr4ma5Z1UsyMJdZ9EI7Hjk_g/viewform?usp=publish-editor" background-color="#ff3d9a" color="#ffffff" font-family="'Chivo Mono', monospace" font-size="10px" font-weight="700" text-transform="uppercase" letter-spacing="1px" inner-padding="8px 16px" border-radius="0px" align="right">
           Unsubscribe
         </mj-button>
       </mj-column>
-      <mj-column width="50%">
+      <mj-column width="40%">
         <mj-button href="https://forms.gle/a6ppo2q2WSJ7BQn67" background-color="#c8f135" color="#0e0e14" font-family="'Chivo Mono', monospace" font-size="10px" font-weight="700" text-transform="uppercase" letter-spacing="1px" inner-padding="8px 16px" border-radius="0px" align="left">
           Send to a friend
         </mj-button>

@@ -147,7 +147,7 @@ async function main() {
   const args = process.argv.slice(2);
   const forceRestart = args.includes("--restart");
   const recentOnly = args.includes("--recent") || args.includes("--recent-hops");
-  const recentCutoff = Date.now() / 1000 - 2 * 86400; // 1 day ago in unix seconds
+  const recentCutoff = Date.now() / 1000 - 1 * 86400; // 1 day ago in unix seconds
 
   // --recent-hops N: expand recent posts freely, but also follow N hops into older posts
   const hopsIdx = args.indexOf("--recent-hops");

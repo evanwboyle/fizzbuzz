@@ -77,55 +77,88 @@ interactive_mode() {
   echo ""
 
   # ── Step 1: Crawl ────────────────────────────────────────────────────────
-  log "STEP 1/4: Scraping recent posts (--recent-hops 2)..."
-  echo "────────────────────────────────────────────────────────"
-  cd "$PROJECT_DIR/scraping"
-  run node crawl.mjs --recent-hops 2
-  log "Crawl complete."
+  if ask_yn "STEP 1/5: Scrape recent posts with crawl.mjs --recent-hops 2?"; then
+    echo "────────────────────────────────────────────────────────"
+    cd "$PROJECT_DIR/scraping"
+    run node crawl.mjs --recent-hops 2
+    log "Crawl complete."
+  else
+    log "Skipped crawl step."
+  fi
   echo ""
 
   # ── Step 2: Sanitize ─────────────────────────────────────────────────────
-  log "STEP 2/4: Sanitizing crawl data to CSV..."
-  echo "────────────────────────────────────────────────────────"
-  cd "$PROJECT_DIR/email"
-  run python3 sanitize.py
-  log "Sanitize complete."
-  echo ""
-
-  # Show head of CSV so the user can verify
-  CSV_FILE="$PROJECT_DIR/data/crawl-results-new.csv"
-  if [ -f "$CSV_FILE" ]; then
-    log "Preview of sanitized CSV (first 10 lines):"
+  if ask_yn "STEP 2/5: Sanitize crawl data to CSV?"; then
     echo "────────────────────────────────────────────────────────"
-    head -n 10 "$CSV_FILE" | tee -a "$LOG_FILE"
+    cd "$PROJECT_DIR/email"
+    run python3 sanitize.py
+    log "Sanitize complete."
     echo ""
-    local line_count
-    line_count=$(wc -l < "$CSV_FILE" | tr -d ' ')
-    log "Total rows in CSV: $line_count"
-    echo ""
-  else
-    log "WARNING: CSV file not found at $CSV_FILE"
-  fi
 
-  # ── Step 3: Generate email ───────────────────────────────────────────────
-  log "STEP 3/4: Generating email with AI..."
-  echo "────────────────────────────────────────────────────────"
-  cd "$PROJECT_DIR/email"
-  run python3 generate-email.py
-  log "Email generation complete."
+    # Show head of CSV so the user can verify
+    CSV_FILE="$PROJECT_DIR/data/crawl-results-new.csv"
+    if [ -f "$CSV_FILE" ]; then
+      log "Preview of sanitized CSV (first 10 lines):"
+      echo "────────────────────────────────────────────────────────"
+      head -n 10 "$CSV_FILE" | tee -a "$LOG_FILE"
+      echo ""
+      local line_count
+      line_count=$(wc -l < "$CSV_FILE" | tr -d ' ')
+      log "Total rows in CSV: $line_count"
+    fi
+  else
+    log "Skipped sanitize step."
+  fi
   echo ""
 
-  # Find the latest generated email
-  LATEST_EMAIL=$(ls -t "$PROJECT_DIR/email/output"/fizz_email_*.html 2>/dev/null | head -1)
-  if [ -z "$LATEST_EMAIL" ]; then
-    log "ERROR: No generated email found in email/output/"
+  # ── Step 3: Generate raw AI output ──────────────────────────────────────
+  if ask_yn "STEP 3/5: Generate raw AI output?"; then
+    echo "────────────────────────────────────────────────────────"
+    cd "$PROJECT_DIR/email"
+    run python3 generate-email.py --raw
+    log "Raw AI generation complete."
+  else
+    log "Skipped raw generation."
+  fi
+  echo ""
+
+  # Find the latest raw output
+  LATEST_RAW=$(ls -t "$PROJECT_DIR/email/output"/fizz_raw_*.html 2>/dev/null | head -1)
+  if [ -z "$LATEST_RAW" ]; then
+    log "ERROR: No raw output found in email/output/"
     exit 1
   fi
-  log "Generated email: $(basename "$LATEST_EMAIL")"
+  log "Raw output: $(basename "$LATEST_RAW")"
+
+  # Show a quick summary of what the model produced
+  echo "────────────────────────────────────────────────────────"
+  local img_count
+  img_count=$(grep -oc 'fb-image\|mj-image\|<img' "$LATEST_RAW" 2>/dev/null || echo "0")
+  log "Images found in raw output: $img_count"
   echo ""
 
-  # ── Step 4: Review & Send ────────────────────────────────────────────────
-  log "STEP 4/4: Review & Send"
+  # ── Step 4: Assemble email ────────────────────────────────────────────
+  if ask_yn "STEP 4/5: Assemble raw output into email template?"; then
+    echo "────────────────────────────────────────────────────────"
+    cd "$PROJECT_DIR/email"
+    run python3 assemble.py --file "$LATEST_RAW"
+    log "Assembly complete."
+  else
+    log "Skipped assembly."
+  fi
+  echo ""
+
+  # Find the latest assembled email
+  LATEST_EMAIL=$(ls -t "$PROJECT_DIR/email/output"/fizz_email_*.html 2>/dev/null | head -1)
+  if [ -z "$LATEST_EMAIL" ]; then
+    log "ERROR: No assembled email found in email/output/"
+    exit 1
+  fi
+  log "Assembled email: $(basename "$LATEST_EMAIL")"
+  echo ""
+
+  # ── Step 5: Review & Send ────────────────────────────────────────────────
+  log "STEP 5/5: Review & Send"
   echo "────────────────────────────────────────────────────────"
 
   # Ask to view in browser

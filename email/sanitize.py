@@ -1,11 +1,20 @@
-import json, csv, time
+import json, csv, re, time
+from datetime import datetime
 from pathlib import Path
 
+# Relative time words that become unreliable once a post ages
+_RELATIVE_TIME_RE = re.compile(
+    r'\b(tonight|tonite|tomorrow|tmrw|tmr|this morning|this afternoon|this evening'
+    r'|this weekend|this friday|this saturday|this sunday|this monday|this tuesday'
+    r'|this wednesday|this thursday|later today|tn|rn|right now)\b',
+    re.IGNORECASE,
+)
+
 # ── Config ──────────────────────────────────────────────────────────────────
-DAYS = 2                    # Only include posts from the last N days
-MOST_LIKED = 100            # Keep only the N most-liked posts (None = no limit)
+DAYS = 1.5                    # Only include posts from the last N days
+MOST_LIKED = 50            # Keep only the N most-liked posts (None = no limit)
 LEAST_LIKED = 5          # Keep only the N least-liked posts (None = no limit)
-MOST_LIKED_REFIZZES = 50    # Keep only the N most-liked reFizzes overall (None = no limit)
+MOST_LIKED_REFIZZES = 30    # Keep only the N most-liked reFizzes overall (None = no limit)
 LEAST_LIKED_REFIZZES = 5    # Also include the N least-liked reFizzes overall (None = skip)
 INCLUDE_VERIFIED = True     # Always include posts from verified orgs
 # ────────────────────────────────────────────────────────────────────────────
@@ -113,11 +122,20 @@ for p in all_posts.values():
         identity_str = f"{name} ({community})" + (" [verified]" if verified else "")
         is_verified_org = verified
 
+    # Annotate relative time references so the model knows they're stale
+    text = p.get("text", "").replace("\n", " ")
+    post_ts = p.get("date", 0)
+    if post_ts:
+        posted_str = datetime.fromtimestamp(post_ts).strftime("%b %-d at %-I:%M%p")
+        text = _RELATIVE_TIME_RE.sub(rf'[RELATIVE TIME: \1 (relative to {posted_str})]', text)
+    else:
+        text = _RELATIVE_TIME_RE.sub(r'[RELATIVE TIME: \1 (unknown post time)]', text)
+
     rows.append({
         "identity": identity_str,
         "likes": p.get("likesMinusDislikes", 0),
         "comments": p.get("commentCount", 0),
-        "text": p.get("text", "").replace("\n", " "),
+        "text": text,
         "media": " ; ".join(media_urls),
         "refizzes": refizzes_str,
         "_verified": is_verified_org,
