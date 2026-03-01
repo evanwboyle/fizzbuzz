@@ -108,15 +108,18 @@ def prepare_for_email(html: str) -> str:
     for var, value in CSS_VARS.items():
         html = html.replace(var, value)
 
-    # 2 — Replace @import with <link> tag in <head>
+    # 2 — Strip @import (will be re-added as <link> after premailer)
     html = re.sub(
         r"@import\s+url\(['\"]https://fonts\.googleapis\.com[^)]+\)['\"]?\s*;?",
         "",
         html,
     )
-    html = html.replace("</head>", f"  {FONT_LINK}\n</head>", 1)
 
-    # 3 — Inline CSS (moves <style> rules to inline style attributes)
+    # 3 — Strip @keyframes (unsupported in email clients, confuses premailer)
+    html = re.sub(r"@keyframes\s+\w+\s*\{[^}]*\{[^}]*\}[^}]*\}", "", html)
+    html = re.sub(r"animation:[^;]+;", "", html)
+
+    # 4 — Inline CSS (moves <style> rules to inline style attributes)
     html = transform(
         html,
         keep_style_tags=True,      # keep <style> as fallback for clients that support it
@@ -124,7 +127,10 @@ def prepare_for_email(html: str) -> str:
         cssutils_logging_level=50,  # suppress cssutils warnings
     )
 
-    # 4 — Prevent Gmail from collapsing repeated structural elements.
+    # 5 — Insert Google Fonts <link> AFTER premailer (premailer strips <link> tags)
+    html = html.replace("</head>", f"  {FONT_LINK}\n</head>", 1)
+
+    # 6 — Prevent Gmail from collapsing repeated structural elements.
     #     Gmail's clipping heuristic triggers on identical adjacent blocks.
     #     Inserting a unique zero-width non-joiner (&#8204;) + hidden span
     #     before each section makes every block look distinct to the parser.

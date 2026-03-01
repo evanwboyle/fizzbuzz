@@ -1,5 +1,6 @@
 import os
 import re
+import argparse
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
@@ -44,6 +45,14 @@ client = anthropic.Anthropic(
     base_url=base_url,
 )
 
+# ---- Parse arguments ----
+parser = argparse.ArgumentParser(description="Generate FizzBuzz newsletter via AI")
+parser.add_argument(
+    "--raw", action="store_true",
+    help="Save raw AI output only (no template assembly). Use assemble.py later to combine with template.",
+)
+args = parser.parse_args()
+
 # ---- Get CSV path ----
 csv_path = str(Path(__file__).resolve().parents[1] / "data" / "crawl-results-new.csv")
 
@@ -77,15 +86,18 @@ prompt = prompt_template.replace("[PASTE CSV HERE]", csv_text)
 prompt = prompt.replace("[EDITION_MEMORY_LOG]", memory_log)
 prompt = prompt.replace("[SLANG_GLOSSARY]", slang_glossary)
 
-# ---- Load HTML template ----
-template_path = SCRIPT_DIR / "input" / "template.html"
-if not template_path.is_file():
-    raise FileNotFoundError(f"HTML template not found: {template_path}")
-html_template = template_path.read_text(encoding="utf-8")
+# ---- Load HTML template (unless --raw) ----
+html_template = None
+if not args.raw:
+    template_path = SCRIPT_DIR / "input" / "template.html"
+    if not template_path.is_file():
+        raise FileNotFoundError(f"HTML template not found: {template_path}")
+    html_template = template_path.read_text(encoding="utf-8")
 
 # ---- Prepare output file ----
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = str(SCRIPT_DIR / "output" / f"fizz_email_{timestamp}.html")
+prefix = "fizz_raw" if args.raw else "fizz_email"
+output_file = str(SCRIPT_DIR / "output" / f"{prefix}_{timestamp}.html")
 
 # ---- Call MiniMax via Anthropic SDK (streaming) ----
 print(f"Prompt size: {len(prompt):,} chars ({len(df)} posts loaded)")
@@ -184,22 +196,27 @@ if unknown_slang and unknown_slang.strip():
 else:
     print("[No unknown slang reported.]")
 
-html_blocks = [issue_info, ticker, sections, footer_except]
-if all(html_blocks):
-    final_html = html_template
-    final_html = final_html.replace("{{ISSUE_INFO}}", issue_info)
-    final_html = final_html.replace("{{TICKER_CONTENT}}", ticker)
-    final_html = final_html.replace("{{SECTIONS}}", sections)
-    final_html = final_html.replace("{{FOOTER_EXCEPT}}", footer_except)
-    print("[Template assembly: OK]")
-else:
-    missing = [name for name, val in [
-        ("ISSUE_INFO", issue_info), ("TICKER", ticker),
-        ("SECTIONS", sections), ("FOOTER_EXCEPT", footer_except)
-    ] if val is None]
-    print(f"\nWARNING: Could not find delimited blocks: {', '.join(missing)}")
-    print("Falling back to raw AI output.")
+if args.raw:
     final_html = raw_output
+    print("[Raw mode: skipping template assembly]")
+    print(f"  -> Run assemble.py to combine with template later.")
+else:
+    html_blocks = [issue_info, ticker, sections, footer_except]
+    if all(html_blocks):
+        final_html = html_template
+        final_html = final_html.replace("{{ISSUE_INFO}}", issue_info)
+        final_html = final_html.replace("{{TICKER_CONTENT}}", ticker)
+        final_html = final_html.replace("{{SECTIONS}}", sections)
+        final_html = final_html.replace("{{FOOTER_EXCEPT}}", footer_except)
+        print("[Template assembly: OK]")
+    else:
+        missing = [name for name, val in [
+            ("ISSUE_INFO", issue_info), ("TICKER", ticker),
+            ("SECTIONS", sections), ("FOOTER_EXCEPT", footer_except)
+        ] if val is None]
+        print(f"\nWARNING: Could not find delimited blocks: {', '.join(missing)}")
+        print("Falling back to raw AI output.")
+        final_html = raw_output
 
 with open(output_file, "w", encoding="utf-8") as f:
     f.write(final_html)

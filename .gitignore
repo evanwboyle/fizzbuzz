@@ -13,3 +13,13 @@ email/output/
 # Dependencies
 node_modules
 .venv
+
+
+email/__pycache__/
+
+# logs
+edition-memory.log
+slang-glossary.txt
+
+# OS files
+**/.DS_Store

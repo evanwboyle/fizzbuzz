@@ -396,15 +396,56 @@
     }
 
     li { margin-bottom: 6px; }
+
+    /* ── Mobile: bump small text so it's readable ─────────────── */
+    @media screen and (max-width: 660px) {
+      .section-label { font-size: 11px; padding: 5px 12px; }
+      .camp-title { font-size: 12px; }
+      .stat-pill { font-size: 12px; padding: 7px 14px; }
+      .pull-quote cite { font-size: 12px; }
+      .img-caption { font-size: 12px; }
+      .masthead-tag { font-size: 11px; }
+      .masthead-issue { font-size: 11px; }
+      .masthead-sub { font-size: 12px; }
+      .ticker-content { font-size: 12px; }
+      .weather-box p { font-size: 12px; }
+      .potd-label { font-size: 12px; }
+      .potd-box cite { font-size: 12px; }
+      .footer-link { font-size: 12px; }
+    }
+
+    /* ── Dark mode: invert background, keep dark header/footer ── */
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a24 !important; }
+      .container { background: #1e1e2a !important; box-shadow: none !important; }
+      .content { color: #e0e0e0 !important; }
+      .content p, .content li { color: #e0e0e0 !important; }
+      .section-title { color: #fefefe !important; }
+      .section-intro { color: #e0e0e0 !important; }
+      .camp-block.believers { background: #2a3318 !important; }
+      .camp-block.confused { background: #2e1a26 !important; }
+      .camp-block.contra { background: #2e2218 !important; }
+      .camp-title { color: #ccc !important; }
+      .camp-block p { color: #d0d0d0 !important; }
+      .weather-box { background: #1a2a35 !important; }
+      .weather-box p { color: #c0dde8 !important; }
+      .zigzag { opacity: 0.7; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="masthead">
-      <div class="masthead-top">
-        <div class="masthead-tag">Yale Only</div>
-        <div class="masthead-issue">{{ISSUE_INFO}}</div>
-      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-bottom:20px;">
+        <tr>
+          <td align="left" valign="top">
+            <div class="masthead-tag">Yale Only</div>
+          </td>
+          <td align="right" valign="top">
+            <div class="masthead-issue">{{ISSUE_INFO}}</div>
+          </td>
+        </tr>
+      </table>
       <div class="masthead-title">
         <span>FIZZ</span><br><span class="pink">BUZZ</span>
       </div>
@@ -434,10 +475,16 @@
         embarrassment incurred while reading this. This newsfeed was AI generated based on real posts, take it with a grain of salt. All posters are anonymous.<br>
         <strong>{{FOOTER_EXCEPT}}</strong>
       </p>
-      <div class="footer-links">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSccbKFmIyWuBD0FIiQYyBtaFVFr4ma5Z1UsyMJdZ9EI7Hjk_g/viewform?usp=publish-editor" class="footer-link fl-pink" style="text-decoration:none;color:inherit;">Unsubscribe</a>
-        <a href="https://forms.gle/a6ppo2q2WSJ7BQn67" class="footer-link fl-lime" style="text-decoration:none;color:inherit;">Send to a friend</a>
-      </div>
+      <table cellpadding="0" cellspacing="0" border="0" align="center" style="border-collapse:collapse;margin-top:24px;">
+        <tr>
+          <td style="padding-right:8px;">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLSccbKFmIyWuBD0FIiQYyBtaFVFr4ma5Z1UsyMJdZ9EI7Hjk_g/viewform?usp=publish-editor" class="footer-link fl-pink" style="text-decoration:none;color:white;">Unsubscribe</a>
+          </td>
+          <td style="padding-left:8px;">
+            <a href="https://forms.gle/a6ppo2q2WSJ7BQn67" class="footer-link fl-lime" style="text-decoration:none;color:#0e0e14;">Send to a friend</a>
+          </td>
+        </tr>
+      </table>
     </div>
   </div>
 </body>
