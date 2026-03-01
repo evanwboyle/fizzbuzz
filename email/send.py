@@ -262,6 +262,12 @@ def main():
         help="Path to a specific HTML newsletter file (default: latest)"
     )
     parser.add_argument(
+        "--to", "-t",
+        type=str,
+        default=None,
+        help="Send to a specific email address instead of the full mailing list"
+    )
+    parser.add_argument(
         "--sample", "-s",
         action="store_true",
         help="Launch a web GUI where visitors can request a sample email"
@@ -290,7 +296,10 @@ def main():
         return
 
     # ── Normal bulk-send mode ────────────────────────────────────────────
-    recipients = load_mailing_list()
+    if args.to:
+        recipients = [args.to]
+    else:
+        recipients = load_mailing_list()
 
     print(f"📄 Newsletter: {newsletter_path.name}")
     print(f"👥 Recipients: {len(recipients)}")
