@@ -497,14 +497,14 @@ def main():
 
     # ---- Call MiniMax via Anthropic SDK (streaming) ----
     print(f"Prompt size: {len(prompt):,} chars ({len(df)} posts loaded)")
-    print(f"Model: MiniMax-M2.5 | max_tokens: 16000")
+    print(f"Model: MiniMax-M2.5 | max_tokens: 96000")
     print(f"Output: {output_file}")
     print(f"Streaming...\n")
 
     try:
         stream = client.messages.stream(
             model="MiniMax-M2.5",
-            max_tokens=16000,
+            max_tokens=96000,
             system="You are a witty college newsletter writer. Output ONLY the delimited content blocks as instructed. Use fb-* shorthand tags (fb-section, fb-quote, fb-image, fb-zigzag, fb-stats, fb-camp, fb-potd, fb-weather) for the SECTIONS block — no raw MJML, no raw HTML divs, no full documents.",
             messages=[
                 {

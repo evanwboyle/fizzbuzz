@@ -24,5 +24,10 @@ logs
 # OS files
 **/.DS_Store
 
+scraping/test-scripts/
 
+# MCP config (contains local paths)
+.mcp.json
 
+# Tools (large external dependencies)
+tools/

@@ -11,7 +11,7 @@ _RELATIVE_TIME_RE = re.compile(
 )
 
 # ── Config ──────────────────────────────────────────────────────────────────
-DAYS = 1.5                    # Only include posts from the last N days
+DAYS = 7                    # Only include posts from the last N days
 MOST_LIKED = 50            # Keep only the N most-liked posts (None = no limit)
 LEAST_LIKED = 5          # Keep only the N least-liked posts (None = no limit)
 MOST_LIKED_REFIZZES = 30    # Keep only the N most-liked reFizzes overall (None = no limit)

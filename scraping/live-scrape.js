@@ -71,6 +71,14 @@ if (missingConfig.length > 0) {
 let bearerToken = null;
 let savedPosts = [];
 
+// Debug log for raw Pusher events
+const DEBUG_LOG = path.resolve(__dirname, "../data/pusher-events.jsonl");
+
+function logEvent(channel, eventName, data) {
+  const line = JSON.stringify({ ts: new Date().toISOString(), channel, event: eventName, data }) + "\n";
+  fs.appendFileSync(DEBUG_LOG, line);
+}
+
 // Load existing posts if file exists
 if (fs.existsSync(CONFIG.OUTPUT_FILE)) {
   savedPosts = JSON.parse(fs.readFileSync(CONFIG.OUTPUT_FILE, "utf8"));
@@ -182,30 +190,61 @@ async function main() {
     console.error("❌ Pusher connection error:", err);
   });
 
-  // Subscribe to the community channel
-  const channel = pusher.subscribe(`private-community-${CONFIG.COMMUNITY}`);
+  // Track all unique event names we see
+  const seenEvents = new Set();
 
-  channel.bind("pusher:subscription_succeeded", () => {
-    console.log(`✅ Subscribed to private-community-${CONFIG.COMMUNITY}`);
-    console.log("👂 Listening for new posts...\n");
-  });
+  function subscribeChannel(channelName) {
+    const ch = pusher.subscribe(channelName);
 
-  channel.bind("pusher:subscription_error", (err) => {
-    console.error("❌ Subscription error:", err);
-  });
+    ch.bind("pusher:subscription_succeeded", () => {
+      console.log(`✅ Subscribed to ${channelName}`);
+    });
 
-  channel.bind_global((eventName, data) => {
-    if (eventName.startsWith("pusher:")) return;
+    ch.bind("pusher:subscription_error", (err) => {
+      console.error(`❌ Subscription error on ${channelName}:`, JSON.stringify(err));
+    });
 
-    if (data?.data?.postID) {
-      const post = sanitizePost(data.contentType, data.data);
-      const isNew = savePost(post);
-      if (isNew) {
-        console.log(`\n📝 "${post.text || "(no text)"}"`);
-        notifyFizzPost(post);
+    ch.bind_global((eventName, data) => {
+      // Log ALL events (including pusher: internals) to debug file
+      logEvent(channelName, eventName, data);
+
+      if (!seenEvents.has(eventName)) {
+        seenEvents.add(eventName);
+        console.log(`🆕 New event type: "${eventName}" on ${channelName}`);
       }
-    }
-  });
+
+      if (eventName.startsWith("pusher:")) return;
+
+      if (data?.data?.postID) {
+        const post = sanitizePost(data.contentType, data.data);
+        const isNew = savePost(post);
+        if (isNew) {
+          console.log(`\n📝 [${eventName}] "${post.text || "(no text)"}"`);
+          notifyFizzPost(post);
+        }
+      } else {
+        // Log non-post events to console for discovery
+        const preview = JSON.stringify(data).slice(0, 200);
+        console.log(`📡 [${eventName}] ${preview}`);
+      }
+    });
+
+    return ch;
+  }
+
+  // Subscribe to multiple channel patterns
+  const community = CONFIG.COMMUNITY;
+  const channels = [
+    `private-community-${community}`,
+    `cache-community-${community}`,
+    `presence-community-${community}`,
+  ];
+
+  console.log(`\n🔍 Attempting ${channels.length} channel subscriptions...`);
+  console.log(`📝 Raw events logging to: ${DEBUG_LOG}\n`);
+  for (const name of channels) {
+    subscribeChannel(name);
+  }
 
   // Refresh token every 55 minutes (expires every 60)
   setInterval(refreshBearerToken, 55 * 60 * 1000);
