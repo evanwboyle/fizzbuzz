@@ -12,7 +12,7 @@ _RELATIVE_TIME_RE = re.compile(
 
 # ── Config ──────────────────────────────────────────────────────────────────
 DAYS = 7                    # Only include posts from the last N days
-MOST_LIKED = 50            # Keep only the N most-liked posts (None = no limit)
+MOST_LIKED = 200            # Keep only the N most-liked posts (None = no limit)
 LEAST_LIKED = 5          # Keep only the N least-liked posts (None = no limit)
 MOST_LIKED_REFIZZES = 30    # Keep only the N most-liked reFizzes overall (None = no limit)
 LEAST_LIKED_REFIZZES = 5    # Also include the N least-liked reFizzes overall (None = skip)
@@ -20,11 +20,14 @@ INCLUDE_VERIFIED = True     # Always include posts from verified orgs
 # ────────────────────────────────────────────────────────────────────────────
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-INPUT_PATH = ROOT_DIR / "data" / "crawl-results.json"
+INPUT_PATH = ROOT_DIR / "data" / "posts-db.json"
+LEGACY_INPUT_PATH = ROOT_DIR / "data" / "crawl-results.json"
 OUTPUT_PATH = ROOT_DIR / "data" / "crawl-results-new.csv"
 
-with open(INPUT_PATH) as f:
+input_path = INPUT_PATH if INPUT_PATH.exists() else LEGACY_INPUT_PATH
+with open(input_path) as f:
     data = json.load(f)
+print(f"Reading from {input_path} ({len(data.get('posts', []))} posts)")
 
 cutoff = time.time() - 86400 * DAYS
 
@@ -139,6 +142,7 @@ for p in all_posts.values():
         "media": " ; ".join(media_urls),
         "refizzes": refizzes_str,
         "_verified": is_verified_org,
+        "_postID": p["postID"],
     })
 
 rows.sort(key=lambda r: r["likes"], reverse=True)
@@ -159,9 +163,19 @@ if INCLUDE_VERIFIED:
 if selected:
     rows = [r for r in rows if id(r) in selected]
 
-# Remove internal tracking field
+# Build post text → postID map for link matching at assembly time
+post_text_map = {}
+for r in rows:
+    post_id = r.pop("_postID")
+    post_text_map[post_id] = r.get("text", "")
+
+# Remove internal tracking fields
 for r in rows:
     del r["_verified"]
+
+POST_TEXT_MAP_PATH = ROOT_DIR / "data" / "post-text-map.json"
+with open(POST_TEXT_MAP_PATH, "w", encoding="utf-8") as f:
+    json.dump(post_text_map, f, indent=2)
 
 fieldnames = ["identity", "likes", "comments", "text", "media", "refizzes"]
 
@@ -174,4 +188,5 @@ with open(OUTPUT_PATH, "w", newline="") as f:
 
 file_size = OUTPUT_PATH.stat().st_size
 print(f"Wrote {len(rows)} posts ({total_refizzes_kept} reFizzes kept out of {len(all_refizzes)}) from last {DAYS} days to {OUTPUT_PATH}")
+print(f"  Post text map: {POST_TEXT_MAP_PATH} ({len(post_text_map)} entries)")
 print(f"  File size: {file_size:,} chars")

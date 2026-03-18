@@ -2,6 +2,7 @@ import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { mergeIntoDB } from "./db.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ENV_PATH = fileURLToPath(new URL("../.env", import.meta.url));
@@ -448,6 +449,9 @@ async function main() {
   save(allPosts, edges, stats.done, countRecent());
   const finalPosts = Array.from(allPosts.values()).sort((a, b) => (b.likesMinusDislikes || 0) - (a.likesMinusDislikes || 0));
   const finalRecent = finalPosts.filter(p => p.date >= recencyCutoff);
+
+  // Merge into shared posts DB
+  mergeIntoDB(finalPosts, "crawl");
 
   console.log(`\n── Done!`);
   console.log(`   ${finalPosts.length} unique posts (${finalRecent.length} from last ${opts.recencyDays}d)`);

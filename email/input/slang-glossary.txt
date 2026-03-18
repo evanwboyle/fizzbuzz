@@ -1,6 +1,26 @@
+# --- Single words/abbreviations ---
 touse = top house (as in fraternity/sorority ranking); alternates like "bouse" mean bottom house
-chud = a derogaratory, joking term for someone who stays inside all day
+chud = a derogatory, joking term for someone who stays inside all day
 mogging = outclassing someone, dominating them, typically looks-wise
 cooked = 'he cooked you' means he destroyed you, 'he cooked' means he did well
 W or L = good or bad, used like "W staff for helping"
 glazing = excessively praising someone or something
+deadass = seriously, genuinely, no exaggeration
+lowkey = subtly, somewhat, not overtly
+atp = at this point
+cracked = having sex with someone
+edon = Co-ed frat
+BK = Berkely College
+HOC = head of college
+
+# --- Phrase patterns (use [brackets] for variable parts) ---
+the big [name] = requesting/hyping a specific person for something, implies they're a big deal (e.g., "can we get the big Kiriakou for YPU?")
+bro is trying to [verb] = mocking someone for doing something premature or cringe (e.g., "Bro is trying to pre order")
+sheeple = people who follow the crowd mindlessly (e.g., "all the sheeple went to PR")
+
+# --- Emoji combos (how posters express reactions) ---
+😭✌️ = "this is crazy, I wouldn't do that"
+💀 = "I'm dead" / that's hilarious
+😭😭 = exaggerated sadness or disbelief, not literal crying
+🤩🤩 = sarcastic excitement or genuine hype depending on context
+😬 = cringe or awkward sympathy

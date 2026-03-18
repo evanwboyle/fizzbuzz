@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 send_newsletter.py
-Sends the latest FizzBuzz HTML newsletter to a list of recipients via SendGrid.
+Sends the latest FizzBuzz HTML newsletter to a list of recipients via SMTP.
 
 Usage:
     python3 send.py
@@ -10,27 +10,33 @@ Usage:
     python3 send_newsletter.py --sample --port 8080  # custom port
 
 Setup:
-    pip install sendgrid python-dotenv flask
-    Add SENDGRID_API_KEY, SENDER_EMAIL, and SENDER_NAME to your .env file
+    pip install python-dotenv flask
+    Add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SENDER_EMAIL,
+    and SENDER_NAME to your .env file.
+    For Gmail: SMTP_HOST=smtp.gmail.com, SMTP_PORT=587, SMTP_PASSWORD=<app password>
     Create a .mailing_list file in the fizzbuzz root with one email per line
 """
 
 import os
 import re
 import glob
+import smtplib
 import argparse
 import webbrowser
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
 from dotenv import load_dotenv
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, To, Bcc
 
 # ── Load .env from fizzbuzz root ─────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 
 # ── Configuration ─────────────────────────────────────────────────────────────
-SENDGRID_API_KEY  = os.getenv("SENDGRID_API_KEY")
+SMTP_HOST         = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT         = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER         = os.getenv("SMTP_USER") or os.getenv("SENDER_EMAIL")
+SMTP_PASSWORD     = os.getenv("SMTP_PASSWORD")
 SENDER_EMAIL      = os.getenv("SENDER_EMAIL")
 SENDER_NAME       = os.getenv("SENDER_NAME", "FizzBuzz")
 EMAIL_SUBJECT     = os.getenv("EMAIL_SUBJECT", "📰 FizzBuzz — Yale's Daily Digest")
@@ -216,14 +222,10 @@ def run_sample_server(newsletter_path: Path, port: int):
         if not email or "@" not in email:
             return jsonify(error="Please enter a valid email address."), 400
         try:
-            status = send_newsletter(
-                prepared_html, [email], EMAIL_SUBJECT
-            )
+            send_newsletter(prepared_html, [email], EMAIL_SUBJECT)
         except Exception as exc:
             return jsonify(error=str(exc)), 500
-        if status in (200, 202):
-            return jsonify(message=f"Sample sent to {email}!")
-        return jsonify(error=f"SendGrid returned HTTP {status}"), 502
+        return jsonify(message=f"Sample sent to {email}!")
 
     url = f"http://localhost:{port}"
     print(f"📄 Sample newsletter: {newsletter_path.name}")
@@ -234,29 +236,27 @@ def run_sample_server(newsletter_path: Path, port: int):
 
 
 def send_newsletter(html_content: str, recipients: list[str], subject: str):
-    if not SENDGRID_API_KEY:
-        raise ValueError("SENDGRID_API_KEY not set in .env")
+    if not SMTP_PASSWORD:
+        raise ValueError("SMTP_PASSWORD not set in .env")
     if not SENDER_EMAIL:
         raise ValueError("SENDER_EMAIL not set in .env")
 
-    message = Mail(
-        from_email=(SENDER_EMAIL, SENDER_NAME),
-        to_emails=SENDER_EMAIL,
-        subject=subject,
-        html_content=html_content,
-    )
-    for email in recipients:
-        message.add_bcc(Bcc(email))
+    msg = MIMEMultipart("alternative")
+    msg["From"] = f"{SENDER_NAME} <{SENDER_EMAIL}>"
+    msg["Subject"] = subject
+    msg["Bcc"] = ", ".join(recipients)
+    msg.attach(MIMEText(html_content, "html"))
 
-    client = SendGridAPIClient(SENDGRID_API_KEY)
-    response = client.send(message)
-    return response.status_code
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.sendmail(SENDER_EMAIL, recipients, msg.as_string())
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Send FizzBuzz newsletter via SendGrid")
+    parser = argparse.ArgumentParser(description="Send FizzBuzz newsletter via SMTP")
     parser.add_argument(
         "--file", "-f",
         type=str,
@@ -267,7 +267,12 @@ def main():
         "--to", "-t",
         type=str,
         default=None,
-        help="Send to a specific email address instead of the full mailing list"
+        help="Send to a specific email address"
+    )
+    parser.add_argument(
+        "--list", "-l",
+        action="store_true",
+        help="Send to the full mailing list (required for bulk sends)"
     )
     parser.add_argument(
         "--sample", "-s",
@@ -297,7 +302,10 @@ def main():
         run_sample_server(newsletter_path, args.port)
         return
 
-    # ── Normal bulk-send mode ────────────────────────────────────────────
+    # ── Normal send mode ────────────────────────────────────────────────
+    if not args.to and not args.list:
+        parser.error("specify --to <email> for a single send or --list for the full mailing list")
+
     if args.to:
         recipients = [args.to]
     else:
@@ -315,12 +323,8 @@ def main():
     html = prepare_for_email(html)
 
     print("🚀 Sending...")
-    status = send_newsletter(html, recipients, EMAIL_SUBJECT)
-
-    if status in (200, 202):
-        print(f"✅ Sent successfully! (HTTP {status})")
-    else:
-        print(f"⚠️  Unexpected status code: {status}")
+    send_newsletter(html, recipients, EMAIL_SUBJECT)
+    print("✅ Sent successfully!")
 
 
 if __name__ == "__main__":

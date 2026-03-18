@@ -76,15 +76,44 @@ interactive_mode() {
   log "Log file: $LOG_FILE"
   echo ""
 
-  # ── Step 1: Crawl ────────────────────────────────────────────────────────
-  if ask_yn "STEP 1/5: Scrape recent posts with crawl.mjs --recent-hops 2?"; then
-    echo "────────────────────────────────────────────────────────"
-    cd "$PROJECT_DIR/scraping"
-    run node crawl.mjs --recent-hops 2
-    log "Crawl complete."
-  else
-    log "Skipped crawl step."
-  fi
+  # ── Step 1: Scrape ───────────────────────────────────────────────────────
+  echo "STEP 1/5: Scrape posts (all scrapers merge into data/posts-db.json)"
+  echo "  [1] crawl.mjs   — graph crawler (slower, more thorough)"
+  echo "  [2] top-feed.mjs — top weekly feed (fast, curated)"
+  echo "  [3] both"
+  echo "  [s] skip"
+  echo -n "  Choice [2]: " | tee -a "$LOG_FILE"
+  read -r scrape_choice
+  echo "$scrape_choice" >> "$LOG_FILE"
+  scrape_choice="${scrape_choice:-2}"
+
+  cd "$PROJECT_DIR/scraping"
+  case "$scrape_choice" in
+    1)
+      echo "────────────────────────────────────────────────────────"
+      run node crawl.mjs --recent-hops 2
+      log "Crawl complete."
+      ;;
+    2)
+      echo "────────────────────────────────────────────────────────"
+      run node top-feed.mjs --feed home_top_week
+      log "Top feed scrape complete."
+      ;;
+    3)
+      echo "────────────────────────────────────────────────────────"
+      run node top-feed.mjs --feed home_top_week
+      log "Top feed scrape complete."
+      echo "────────────────────────────────────────────────────────"
+      run node crawl.mjs --recent-hops 2
+      log "Crawl complete."
+      ;;
+    [sS])
+      log "Skipped scrape step."
+      ;;
+    *)
+      log "Unknown choice '$scrape_choice', skipping."
+      ;;
+  esac
   echo ""
 
   # ── Step 2: Sanitize ─────────────────────────────────────────────────────
@@ -111,14 +140,14 @@ interactive_mode() {
   fi
   echo ""
 
-  # ── Step 3: Generate raw AI output ──────────────────────────────────────
-  if ask_yn "STEP 3/5: Generate raw AI output?"; then
+  # ── Step 3: Generate (analysis → image annotation → writing) ────────────
+  if ask_yn "STEP 3/5: Generate newsletter (analysis + images + writing)?"; then
     echo "────────────────────────────────────────────────────────"
     cd "$PROJECT_DIR/email"
-    run python3 generate-email.py --raw
-    log "Raw AI generation complete."
+    run python3 generate-email.py
+    log "AI generation complete."
   else
-    log "Skipped raw generation."
+    log "Skipped generation."
   fi
   echo ""
 
@@ -160,20 +189,6 @@ interactive_mode() {
   # ── Step 5: Review & Send ────────────────────────────────────────────────
   log "STEP 5/5: Review & Send"
   echo "────────────────────────────────────────────────────────"
-
-  # Ask to view in browser
-  if ask_yn "Open the email in your browser to preview?"; then
-    log "Opening email in browser..."
-    open "$LATEST_EMAIL" 2>/dev/null || xdg-open "$LATEST_EMAIL" 2>/dev/null || {
-      log "Could not open browser. File is at: $LATEST_EMAIL"
-    }
-    echo ""
-    echo "Take a look — we'll continue when you're ready."
-    echo -n "Press Enter to continue..." | tee -a "$LOG_FILE"
-    read -r
-    echo "" >> "$LOG_FILE"
-  fi
-  echo ""
 
   # Ask to send test email
   if [ -n "$TEST_EMAIL" ]; then

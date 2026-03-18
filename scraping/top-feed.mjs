@@ -7,7 +7,7 @@
  * cursor-based pagination (20 posts/page) via lastPostID.
  *
  * Usage:
- *   node top-feed.mjs                        # default: home_top, 500 posts
+ *   node top-feed.mjs                        # default: home_top, 1000 posts
  *   node top-feed.mjs --feed home_top_week        # different feed type
  *   node top-feed.mjs --max 2000             # more posts
  *   node top-feed.mjs --feed home_top --max 1000 --output ../data/top-feed.json
@@ -18,6 +18,7 @@ import fetch from "node-fetch";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { mergeIntoDB } from "./db.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ENV_PATH = fileURLToPath(new URL("../.env", import.meta.url));
@@ -186,7 +187,7 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const opts = {
     feedType: "home_top_week",
-    maxPosts: 500,
+    maxPosts: 1000,
     output: null,
     allFeeds: false,
   };
@@ -247,6 +248,10 @@ async function main() {
 
     const outPath = path.resolve(__dirname, "../data/all-feeds.json");
     fs.writeFileSync(outPath, JSON.stringify(output, null, 2));
+
+    // Merge into shared posts DB
+    mergeIntoDB(output.posts, "top-feed");
+
     console.log(`\n── Summary:`);
     for (const [feed, count] of Object.entries(results)) {
       console.log(`   ${feed}: ${count}`);
@@ -268,6 +273,10 @@ async function main() {
     };
 
     fs.writeFileSync(opts.output, JSON.stringify(output, null, 2));
+
+    // Merge into shared posts DB
+    mergeIntoDB(posts, "top-feed");
+
     console.log(`   Saved to ${opts.output}`);
 
     if (posts.length > 0) {

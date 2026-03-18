@@ -13,6 +13,9 @@ Assembly logic lives in generate-email.py; this script is a thin CLI wrapper.
 
 import glob
 import argparse
+import platform
+import subprocess
+import sys
 from pathlib import Path
 
 # Import shared assembly logic from generate-email.py
@@ -102,6 +105,19 @@ def main():
     print(f"[Assembly OK]")
     print(f"Output:     {output_path}")
     print(f"Chars:      {len(final_html):,}")
+
+    # Prompt to open in browser
+    if sys.stdin.isatty():
+        try:
+            answer = input("Open in browser? [y/N] ").strip().lower()
+        except EOFError:
+            answer = ""
+        if answer in ("y", "yes"):
+            if platform.system() == "Darwin":
+                subprocess.run(["open", str(output_path)])
+            else:
+                subprocess.run(["xdg-open", str(output_path)])
+            print(f"[Opened {output_path.name} in browser]")
 
 
 if __name__ == "__main__":
